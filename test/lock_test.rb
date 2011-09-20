@@ -2,8 +2,6 @@ require 'test/unit'
 require 'resque'
 require 'resque/plugins/lock'
 
-$counter = 0
-
 class LockTest < Test::Unit::TestCase
   class Job
     extend Resque::Plugins::Lock
@@ -16,7 +14,7 @@ class LockTest < Test::Unit::TestCase
 
   def setup
     Resque.redis.del('queue:lock_test')
-    Resque.redis.del(Job.lock)
+    Resque.redis.hdel('resque-lock', Job.lock)
   end
 
   def test_lint
@@ -30,11 +28,19 @@ class LockTest < Test::Unit::TestCase
     assert_equal 1, major.to_i
     assert minor.to_i >= 17
     assert Resque::Plugin.respond_to?(:before_enqueue_hooks)
+    assert Resque::Plugin.respond_to?(:before_dequeue_hooks)
   end
 
   def test_lock
     3.times { Resque.enqueue(Job) }
 
     assert_equal 1, Resque.redis.llen('queue:lock_test')
+    assert_equal "true", Resque.redis.hget('resque-lock', Job.lock)
+  end
+
+  def test_unlock
+    Resque.enqueue(Job)
+    Resque.dequeue(Job)
+    assert_equal nil, Resque.redis.hget('resque-lock', Job.lock)
   end
 end
