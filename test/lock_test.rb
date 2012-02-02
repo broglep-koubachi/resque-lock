@@ -37,10 +37,23 @@ class LockTest < Test::Unit::TestCase
     assert_equal 1, Resque.redis.llen('queue:lock_test')
     assert_equal "true", Resque.redis.hget('resque-lock', Job.lock)
   end
+  def test_lock_with_args
+    3.times { Resque.enqueue(Job, 1) }
+
+    assert_equal 1, Resque.redis.llen('queue:lock_test')
+    assert_equal "true", Resque.redis.hget('resque-lock', Job.lock(1))
+  end
 
   def test_unlock
     Resque.enqueue(Job)
     Resque.dequeue(Job)
     assert_nil Resque.redis.hget('resque-lock', Job.lock)
   end
+  def test_unlock_with_args
+    Resque.enqueue(Job, 1)
+    assert_equal "true", Resque.redis.hget('resque-lock', Job.lock(1))
+    Resque.dequeue(Job, 1)
+    assert_nil Resque.redis.hget('resque-lock', Job.lock(1))
+  end
+  
 end
