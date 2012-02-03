@@ -46,6 +46,7 @@ class LockTest < Test::Unit::TestCase
 
   def test_unlock
     Resque.enqueue(Job)
+    assert_equal "true", Resque.redis.hget('resque-lock', Job.lock)
     Resque.dequeue(Job)
     assert_nil Resque.redis.hget('resque-lock', Job.lock)
   end
