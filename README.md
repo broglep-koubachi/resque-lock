@@ -43,4 +43,20 @@ UpdateNetworkGraph is queued at a time, regardless of the
 repo_id. Normally a job is locked using a combination of its
 class name and arguments.
 
+It is also possible to define locks which will get released
+BEFORE performing a job by overriding the lock_running? class
+method in your subclass. This is useful in cases where you need
+to get a job queued even if another job on same queue is already
+running, e.g.
+
+    class UpdateNetworkGraph
+      extend Resque::Plugins::Lock
+
+      # Do not lock a running job
+      def self.lock_running?
+        false
+      end
+    end
+
+
 [rq]: http://github.com/defunkt/resque
