@@ -56,13 +56,18 @@ module Resque
         Resque.redis.del(lock(*args))
       end
 
+      def lock_running?
+        true
+      end
+
       def around_perform_lock(*args)
+        before_dequeue_lock unless lock_running?
         begin
           yield
         ensure
           # Always clear the lock when we're done, even if there is an
           # error.
-          Resque.redis.del(lock(*args))
+          before_dequeue_lock if lock_running?
         end
       end
     end
