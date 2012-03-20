@@ -49,11 +49,11 @@ module Resque
       end
 
       def before_enqueue_lock(*args)
-        Resque.redis.hsetnx('resque-lock', lock(*args), true)
+        Resque.redis.setnx(lock(*args), true)
       end
 
       def before_dequeue_lock(*args)
-        Resque.redis.hdel('resque-lock', lock(*args))
+        Resque.redis.del(lock(*args))
       end
 
       def around_perform_lock(*args)
@@ -62,7 +62,7 @@ module Resque
         ensure
           # Always clear the lock when we're done, even if there is an
           # error.
-          Resque.redis.hdel('resque-lock', lock(*args))
+          Resque.redis.del(lock(*args))
         end
       end
     end
