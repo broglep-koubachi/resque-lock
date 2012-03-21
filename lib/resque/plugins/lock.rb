@@ -85,6 +85,10 @@ module Resque
           before_dequeue_lock if lock_running?
         end
       end
+
+      def self.clear_all_locks
+        Resque.redis.keys('lock:*').collect { |x| Resque.redis.del(x) }.count
+      end
     end
   end
 end
