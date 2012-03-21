@@ -64,11 +64,11 @@ module Resque
       end
 
       def before_enqueue_lock(*args)
-        Resque.redis.setnx(lock(*args), true)
+        Resque.redis.setnx("lock:#{lock(*args)}", true)
       end
 
       def before_dequeue_lock(*args)
-        Resque.redis.del(lock(*args))
+        Resque.redis.del("lock:#{lock(*args)}")
       end
 
       def lock_running?
