@@ -63,12 +63,16 @@ module Resque
         "#{name}-#{args.to_s}"
       end
 
+      def namespaced_lock(*args)
+        "lock:#{lock(*args)}"
+      end
+
       def before_enqueue_lock(*args)
-        Resque.redis.setnx("lock:#{lock(*args)}", true)
+        Resque.redis.setnx(namespaced_lock(*args), true)
       end
 
       def before_dequeue_lock(*args)
-        Resque.redis.del("lock:#{lock(*args)}")
+        Resque.redis.del(namespaced_lock(*args))
       end
 
       def lock_running?
@@ -76,13 +80,13 @@ module Resque
       end
 
       def around_perform_lock(*args)
-        before_dequeue_lock unless lock_running?
+        before_dequeue_lock(*args) unless lock_running?
         begin
           yield
         ensure
           # Always clear the lock when we're done, even if there is an
           # error.
-          before_dequeue_lock if lock_running?
+          before_dequeue_lock(*args) if lock_running?
         end
       end
 
