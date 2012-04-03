@@ -90,8 +90,11 @@ module Resque
         end
       end
 
+      def self.all_locks
+        Resque.redis.keys('lock:*')
+      end
       def self.clear_all_locks
-        Resque.redis.keys('lock:*').collect { |x| Resque.redis.del(x) }.count
+        all_locks.collect { |x| Resque.redis.del(x) }.count
       end
     end
   end
