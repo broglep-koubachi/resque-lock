@@ -68,11 +68,18 @@ module Resque
       end
 
       def before_enqueue_lock(*args)
-        Resque.redis.setnx(namespaced_lock(*args), true)
+        lock_key = namespaced_lock(*args)
+        s = Resque.redis.setnx(lock_key, true)
+        Resque.redis.expire(lock_key, lock_expire) if s
+        return s
       end
 
       def before_dequeue_lock(*args)
         Resque.redis.del(namespaced_lock(*args))
+      end
+
+      def lock_expire
+        30
       end
 
       def lock_running?
